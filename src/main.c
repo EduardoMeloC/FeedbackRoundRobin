@@ -98,12 +98,11 @@ int main(int argc, char* argv[]){
     // Initialize Simulation
     bool isSimulationRunning = true;
     Time.sinceStart = 0;
+    Time.deltaTime = SLEEP_TIME/1000000;
     Time.quantumCountdown = quantum;
 
     // Run main loop while there is still a process to arrive or to be processed
     while(!(ProcessQueue_isEmpty(simulation->processQueue) && ProcessQueue_isEmpty(simulation->arrivalQueue))){
-        Time.deltaTime = SLEEP_TIME/1000000;
-
         // Update is the main function for the simulation
         update(simulation);
 
