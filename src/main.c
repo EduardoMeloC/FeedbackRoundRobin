@@ -12,10 +12,6 @@
 
 /*
     TODO:
-        - Atualmente o primeiro processo a executar não é impresso no stdout. 
-          É preciso que ele seja impresso assim que entrar na priorityQueue 
-          (e não no primeiro frame)
-        
         - Múltiplas filas de feedBack (no lugar de uma única fila chamada priorityQueue)
 
         - Como tratar os diferentes tipos de I/O e preempção
@@ -52,6 +48,7 @@ Simulation* newSimulation(Process* processes[], int n_processes, float quantum){
         
     // Process Queue will keep arrived processes with remaining burst time
     simulation->highPriorityQueue = newProcessQueue(n_processes); 
+    simulation->currentProcess = NULL;
     simulation->quantum = quantum;
     return simulation;
 }
@@ -70,7 +67,14 @@ void update(Simulation* simulation){
     while(!isEmpty(arrivalQueue)){
         if(Time.sinceStart >= front(arrivalQueue)->arrivalTime){
             Process* nextProcess = dequeue(arrivalQueue);
+            bool wasEmpty = isEmpty(highPriorityQueue);
             enqueue(highPriorityQueue, nextProcess);
+
+            if(wasEmpty){
+                currentProcess = front(highPriorityQueue);
+                printf("\rSwitched to Process %s at time %.2f\n", 
+                    currentProcess->name, Time.sinceStart);
+            }
         }
     }
 
@@ -86,8 +90,8 @@ void update(Simulation* simulation){
 
         // Go to the next process with remaining burst time
         previousProcess = currentProcess;
+        dequeue(highPriorityQueue);
         if(!isEmpty(highPriorityQueue)){
-            dequeue(highPriorityQueue);
             currentProcess = front(highPriorityQueue);
         }
 
