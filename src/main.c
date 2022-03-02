@@ -13,10 +13,10 @@
 /*
     TODO:
         - Atualmente o primeiro processo a executar não é impresso no stdout. 
-          É preciso que ele seja impresso assim que entrar na processQueue 
+          É preciso que ele seja impresso assim que entrar na priorityQueue 
           (e não no primeiro frame)
         
-        - Múltiplas filas de feedBack (no lugar de uma única fila chamada processQueue)
+        - Múltiplas filas de feedBack (no lugar de uma única fila chamada priorityQueue)
 
         - Como tratar os diferentes tipos de I/O e preempção
 
@@ -32,7 +32,8 @@ Time_t Time;
 
 typedef struct Simulation{
     ProcessQueue* arrivalQueue;
-    ProcessQueue* processQueue;
+    ProcessQueue* highPriorityQueue;
+    ProcessQueue* lowPriorityQueue;
     Process* currentProcess;
     Process* previousProcess;
     float quantum;
@@ -45,62 +46,70 @@ Simulation* newSimulation(Process* processes[], int n_processes, float quantum){
     ProcessQueue* arrivalQueue = newProcessQueue(n_processes);
     qsort(processes, n_processes, sizeof(*processes), compareArrivalTime);
     for(int i=0; i < n_processes; i++){
-        ProcessQueue_enqueue(arrivalQueue, processes[i]);
+        enqueue(arrivalQueue, processes[i]);
     }
     simulation->arrivalQueue = arrivalQueue;
         
     // Process Queue will keep arrived processes with remaining burst time
-    simulation->processQueue = newProcessQueue(n_processes); 
+    simulation->highPriorityQueue = newProcessQueue(n_processes); 
     simulation->quantum = quantum;
     return simulation;
 }
 
 void update(Simulation* simulation){
+    // Simulation variables in function scope to aliviate verbosishness
+    ProcessQueue* arrivalQueue = simulation->arrivalQueue;
+    ProcessQueue* highPriorityQueue = simulation->highPriorityQueue;
+    ProcessQueue* lowPriorityQueue = simulation->lowPriorityQueue;
+    Process* currentProcess = simulation->currentProcess;
+    Process* previousProcess = simulation->previousProcess;
+    float quantum = simulation->quantum;
+
+
     // Add the process to queue if arrived
-    while(!ProcessQueue_isEmpty(simulation->arrivalQueue)){
-        if(Time.sinceStart >= ProcessQueue_front(simulation->arrivalQueue)->arrivalTime){
-            ProcessQueue_enqueue(simulation->processQueue, 
-                    ProcessQueue_dequeue(simulation->arrivalQueue));
+    while(!isEmpty(arrivalQueue)){
+        if(Time.sinceStart >= front(arrivalQueue)->arrivalTime){
+            Process* nextProcess = dequeue(arrivalQueue);
+            enqueue(highPriorityQueue, nextProcess);
         }
     }
 
     // Update current process (currently being called every frame)
-    if(!ProcessQueue_isEmpty(simulation->processQueue)){
-        simulation->currentProcess = ProcessQueue_front(simulation->processQueue);
+    if(!isEmpty(highPriorityQueue)){
+        currentProcess = front(highPriorityQueue);
     }
-
 
     // If current quantum countDown is over, go to next process with remaining burst time
     if(Time.quantumCountdown <= 0.f){
         // Reset quantum countdown
-        Time.quantumCountdown = simulation->quantum;
+        Time.quantumCountdown = quantum;
 
         // Go to the next process with remaining burst time
-        simulation->previousProcess = simulation->currentProcess;
-        if(!ProcessQueue_isEmpty(simulation->processQueue)){
-            ProcessQueue_dequeue(simulation->processQueue);
-            simulation->currentProcess = ProcessQueue_front(simulation->processQueue);
+        previousProcess = currentProcess;
+        if(!isEmpty(highPriorityQueue)){
+            dequeue(highPriorityQueue);
+            currentProcess = front(highPriorityQueue);
         }
 
         // If there is still burstTime in the previous process, reenqueue it
-        if(simulation->previousProcess->burstTime > 0.0f){
-            ProcessQueue_enqueue(simulation->processQueue, simulation->previousProcess);
+        if(previousProcess->burstTime > 0.0f){
+            enqueue(highPriorityQueue, previousProcess);
         }
 
         // If there was a process switch, print it to the console
-        if(simulation->currentProcess != simulation->previousProcess){
+        if(currentProcess != previousProcess){
             printf("\rSwitched to Process %s at time %.2f\n", 
-                    simulation->currentProcess->name, Time.sinceStart);
+                    currentProcess->name, Time.sinceStart);
         }
     }
 
     // Print timers to console
     printf("\rTime: %.2f\t %s Time: %.2f",
-            Time.sinceStart, simulation->currentProcess->name, simulation->currentProcess->burstTime);
+            Time.sinceStart, currentProcess->name, currentProcess->burstTime);
 
     // Decrease timers
     Time.quantumCountdown -= Time.deltaTime;
-    simulation->currentProcess->burstTime -= Time.deltaTime;  
+    currentProcess->burstTime -= Time.deltaTime;  
 }
 
 
@@ -125,7 +134,7 @@ int main(int argc, char* argv[]){
     Time.quantumCountdown = quantum;
 
     // Run main loop while there is still a process to arrive or to be processed
-    while(!(ProcessQueue_isEmpty(simulation->processQueue) && ProcessQueue_isEmpty(simulation->arrivalQueue))){
+    while(!(isEmpty(simulation->highPriorityQueue) && isEmpty(simulation->arrivalQueue))){
         // Update is the main function for the simulation
         update(simulation);
 

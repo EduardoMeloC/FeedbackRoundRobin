@@ -12,20 +12,20 @@ typedef struct ProcessQueue{
 
 ProcessQueue* newProcessQueue(unsigned capacity);
 
-ProcessQueue* ProcessQueue_delete(ProcessQueue* queue);
+ProcessQueue* delete(ProcessQueue* queue);
 
-bool ProcessQueue_isFull(ProcessQueue* queue);
+bool isFull(ProcessQueue* queue);
 
-bool ProcessQueue_isEmpty(ProcessQueue* queue);
+bool isEmpty(ProcessQueue* queue);
 
-Process* ProcessQueue_front(ProcessQueue* queue);
+Process* front(ProcessQueue* queue);
 
-int ProcessQueue_length(ProcessQueue* queue);
+int length(ProcessQueue* queue);
 
-void ProcessQueue_enqueue(ProcessQueue* queue, Process* element);
+void enqueue(ProcessQueue* queue, Process* element);
 
-Process* ProcessQueue_dequeue(ProcessQueue* queue);
+Process* dequeue(ProcessQueue* queue);
 
-const char* ProcessQueue_toString(ProcessQueue* queue);
+const char* toString(ProcessQueue* queue);
 
 #endif

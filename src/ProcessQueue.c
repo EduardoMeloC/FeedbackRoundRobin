@@ -15,39 +15,39 @@ ProcessQueue* newProcessQueue(unsigned capacity){
     return queue;
 }
 
-ProcessQueue* ProcessQueue_delete(ProcessQueue* queue){
+ProcessQueue* delete(ProcessQueue* queue){
     ProcessQueue* this = queue;
     free(this->m_array);
     free(this);
 }
 
-bool ProcessQueue_isFull(ProcessQueue* queue){
+bool isFull(ProcessQueue* queue){
     ProcessQueue* this = queue;
     return (this->m_length == this->m_capacity);
 }
 
-bool ProcessQueue_isEmpty(ProcessQueue* queue){
+bool isEmpty(ProcessQueue* queue){
     ProcessQueue* this = queue;
     return (this->m_length == 0);
 }
 
-Process* ProcessQueue_front(ProcessQueue* queue){
+Process* front(ProcessQueue* queue){
     ProcessQueue* this = queue;
-    if (ProcessQueue_isEmpty(this)){
+    if (isEmpty(this)){
         fprintf(stderr, "Tentou obter elemento de uma fila vazia\n");
         exit(EXIT_FAILURE);
     }
     return this->m_array[this->m_front];
 }
 
-int ProcessQueue_length(ProcessQueue* queue){
+int length(ProcessQueue* queue){
     ProcessQueue* this = queue;
     return this->m_length;
 }
 
-void ProcessQueue_enqueue(ProcessQueue* queue, Process* element){
+void enqueue(ProcessQueue* queue, Process* element){
     ProcessQueue* this = queue;
-    if (ProcessQueue_isFull(this)){
+    if (isFull(this)){
         // @TODO: realloc no array e aumentar capacidade
         fprintf(stderr, "Tentou adicionar elemento a uma fila cheia\n");
         exit(EXIT_FAILURE);
@@ -58,9 +58,9 @@ void ProcessQueue_enqueue(ProcessQueue* queue, Process* element){
     this->m_length++;
 }
 
-Process* ProcessQueue_dequeue(ProcessQueue* queue){
+Process* dequeue(ProcessQueue* queue){
     ProcessQueue* this = queue;
-    if (ProcessQueue_isEmpty(this)){
+    if (isEmpty(this)){
         fprintf(stderr, "Tentou remover elemento de uma fila vazia\n");
         exit(EXIT_FAILURE);
     }
@@ -71,7 +71,7 @@ Process* ProcessQueue_dequeue(ProcessQueue* queue){
     return element;
 }
 
-const char* ProcessQueue_toString(ProcessQueue* queue){
+const char* toString(ProcessQueue* queue){
     ProcessQueue* this = queue;
     char* str = (char*) safe_malloc(16*this->m_capacity+3 * sizeof(char));
     sprintf(str, "[");
@@ -93,20 +93,20 @@ int main()
     Process* p4 = newProcess("P4",  1, 0);
     Process* p5 = newProcess("P5",  5, 0);
  
-    ProcessQueue_enqueue(queue, p1);
-    ProcessQueue_enqueue(queue, p2);
-    ProcessQueue_enqueue(queue, p3);
-    ProcessQueue_enqueue(queue, p4);
-    ProcessQueue_enqueue(queue, p5);
+    enqueue(queue, p1);
+    enqueue(queue, p2);
+    enqueue(queue, p3);
+    enqueue(queue, p4);
+    enqueue(queue, p5);
 
-    printf("%s\n", ProcessQueue_toString(queue));
+    printf("%s\n", toString(queue));
  
     printf("%s dequeued from queue\n\n",
-           ProcessQueue_dequeue(queue)->name);
+           dequeue(queue)->name);
  
-    printf("%s\n", ProcessQueue_toString(queue));
+    printf("%s\n", toString(queue));
 
-    printf("Front item is %s\n", ProcessQueue_front(queue)->name);
+    printf("Front item is %s\n", front(queue)->name);
  
     return 0;
 }
