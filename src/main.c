@@ -40,10 +40,22 @@ Simulation* newSimulation(Process* processes[], int n_processes, float quantum){
 
     // Sort received processes and add them to the arrival queue
     ProcessQueue* arrivalQueue = newProcessQueue(n_processes);
-    qsort(processes, n_processes, sizeof(*processes), compareArrivalTime);
+
+    for(int i=0; i < n_processes-1; i++){
+        for(int j=0; j < n_processes-1; j++){
+            if(processes[j]->arrivalTime > processes[j+1]->arrivalTime){
+                Process* temp = processes[j];
+                processes[j] = processes[j+1];
+                processes[j+1] = temp;
+            }
+        }
+    }
+
     for(int i=0; i < n_processes; i++){
         enqueue(arrivalQueue, processes[i]);
     }
+
+    printf("%s\n", toString(arrivalQueue));
     simulation->arrivalQueue = arrivalQueue;
         
     // Process Queue will keep arrived processes with remaining burst time
@@ -75,16 +87,16 @@ void update(Simulation* simulation){
                 printf("\rSwitched to Process %s at time %.2f\n", 
                     currentProcess->name, Time.sinceStart);
             }
-        }
+        } else break;
     }
 
     // Update current process (currently being called every frame)
     if(!isEmpty(highPriorityQueue)){
         currentProcess = front(highPriorityQueue);
-    }
+    } else currentProcess = NULL;
 
     // If current quantum countDown is over, go to next process with remaining burst time
-    if(Time.quantumCountdown <= 0.f){
+    if(currentProcess != NULL && Time.quantumCountdown <= 0.f){
         // Reset quantum countdown
         Time.quantumCountdown = quantum;
 
@@ -108,22 +120,31 @@ void update(Simulation* simulation){
     }
 
     // Print timers to console
-    printf("\rTime: %.2f\t %s Time: %.2f",
-            Time.sinceStart, currentProcess->name, currentProcess->burstTime);
+    if(currentProcess == NULL){
+        printf("                                                  ");
+        printf("\rTime: %.2f\t CPU Empty",
+                Time.sinceStart);
+    }
+    else{
+        printf("                                                  ");
+        printf("\rTime: %.2f\t %s Time: %.2f",
+                Time.sinceStart, currentProcess->name, currentProcess->burstTime);
+    }
 
     // Decrease timers
     Time.quantumCountdown -= Time.deltaTime;
-    currentProcess->burstTime -= Time.deltaTime;  
+    if(currentProcess != NULL)
+        currentProcess->burstTime -= Time.deltaTime;  
 }
 
 
 int main(int argc, char* argv[]){
     int n_processes = 5;
-    Process* p1 = newProcess("P1", 10, 0);
-    Process* p2 = newProcess("P2",  1, 0);
-    Process* p3 = newProcess("P3",  2, 0);
-    Process* p4 = newProcess("P4",  1, 0);
-    Process* p5 = newProcess("P5",  5, 0);
+    Process* p1 = newProcess("P1", 10, 10);
+    Process* p2 = newProcess("P2",  1, 1);
+    Process* p3 = newProcess("P3",  2, 15);
+    Process* p4 = newProcess("P4",  1, 16);
+    Process* p5 = newProcess("P5",  5, 17);
 
     Process* processes[5] = {p1, p2, p3, p4, p5};
 

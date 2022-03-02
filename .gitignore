@@ -21,3 +21,6 @@
 
 # Text editro files
 .vscode
+
+# Don't commit random bashfiles
+*.sh
