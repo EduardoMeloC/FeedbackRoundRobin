@@ -55,7 +55,6 @@ Simulation* newSimulation(Process* processes[], int n_processes, float quantum){
         enqueue(arrivalQueue, processes[i]);
     }
 
-    printf("%s\n", toString(arrivalQueue));
     simulation->arrivalQueue = arrivalQueue;
         
     // Process Queue will keep arrived processes with remaining burst time
@@ -74,7 +73,6 @@ void update(Simulation* simulation){
     Process* previousProcess = simulation->previousProcess;
     float quantum = simulation->quantum;
 
-
     // Add the process to queue if arrived
     while(!isEmpty(arrivalQueue)){
         if(Time.sinceStart >= front(arrivalQueue)->arrivalTime){
@@ -89,11 +87,6 @@ void update(Simulation* simulation){
             }
         } else break;
     }
-
-    // Update current process (currently being called every frame)
-    if(!isEmpty(highPriorityQueue)){
-        currentProcess = front(highPriorityQueue);
-    } else currentProcess = NULL;
 
     // If current quantum countDown is over, go to next process with remaining burst time
     if(currentProcess != NULL && Time.quantumCountdown <= 0.f){
@@ -131,6 +124,10 @@ void update(Simulation* simulation){
                 Time.sinceStart, currentProcess->name, currentProcess->burstTime);
     }
 
+    // Reassign pointers
+    simulation->currentProcess = currentProcess;
+    simulation->previousProcess = previousProcess;
+
     // Decrease timers
     Time.quantumCountdown -= Time.deltaTime;
     if(currentProcess != NULL)
@@ -140,11 +137,11 @@ void update(Simulation* simulation){
 
 int main(int argc, char* argv[]){
     int n_processes = 5;
-    Process* p1 = newProcess("P1", 10, 10);
-    Process* p2 = newProcess("P2",  1, 1);
-    Process* p3 = newProcess("P3",  2, 15);
-    Process* p4 = newProcess("P4",  1, 16);
-    Process* p5 = newProcess("P5",  5, 17);
+    Process* p1 = newProcess("P1", 10, 0);
+    Process* p2 = newProcess("P2",  1, 0);
+    Process* p3 = newProcess("P3",  2, 0);
+    Process* p4 = newProcess("P4",  1, 0);
+    Process* p5 = newProcess("P5",  5, 0);
 
     Process* processes[5] = {p1, p2, p3, p4, p5};
 
