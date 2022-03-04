@@ -109,8 +109,9 @@ void update(Simulation* simulation){
             enqueue(highPriorityQueue, nextProcess);
 
             if(wasEmpty){
+                Time.quantumCountdown = quantum;
                 currentProcess = front(highPriorityQueue);
-                printf("Switched to Process %s at time %.2f\n",
+                printf("\rSwitched to Process %s at time %.2f\n",
                     currentProcess->name, Time.sinceStart);
             }
         } else break;
@@ -123,17 +124,17 @@ void update(Simulation* simulation){
             switch(currentProcess->ioTypes[currentProcess->ioAtual]){
                 case disk:
                     enqueue(diskQueue,currentProcess);
-                    printf("enqueue disk\n");
+                    printf("\tenqueue disk\n");
                 break;
 
                 case magTape:
                     enqueue(magTapeQueue,currentProcess);
-                    printf("enqueue magtape\n");
+                    printf("\tenqueue magtape\n");
                 break;
 
                 case printer:
                     enqueue(printerQueue,currentProcess);
-                    printf("enqueue printer\n");
+                    printf("\tenqueue printer\n");
                 break;
 
                 default:
@@ -164,6 +165,14 @@ void update(Simulation* simulation){
         if(!isEmpty(highPriorityQueue)){
             currentProcess = front(highPriorityQueue);
         }
+        else{
+            if(previousProcess->burstTime <= 0.0f){
+                currentProcess = NULL;
+            }
+            else{
+                enqueue(highPriorityQueue, previousProcess);
+            }
+        }
 
         // If there is still burstTime in the previous process, reenqueue it
         if(previousProcess->burstTime > 0.0f){
@@ -172,14 +181,19 @@ void update(Simulation* simulation){
         //else printf("Process %s ended at time %.2f\n", currentProcess->name, Time.sinceStart);
 
         // If there was a process switch, print it to the console
-        if(currentProcess != previousProcess){
-            printf("Switched to Process %s at time %.2f\n",
-                    currentProcess->name, Time.sinceStart);
+        if(currentProcess == NULL){
+            printf("\rSwitched to Process NULL at time %.2f\n",
+                    Time.sinceStart);
+        }
+        else{
+            if(currentProcess != previousProcess){
+                printf("\rSwitched to Process %s at time %.2f\n",
+                        currentProcess->name, Time.sinceStart);
+            }
         }
 
     }
     if(currentProcess != NULL && currentProcess->burstTime <= 0.0f){
-      printf("ACABOU %s, PREEMPCAO\n",currentProcess->name);
       // Reset quantum countdown
       Time.quantumCountdown = quantum;
       // Go to the next process with remaining burst time
@@ -189,7 +203,25 @@ void update(Simulation* simulation){
           currentProcess = front(highPriorityQueue);
       }
       else currentProcess = NULL;
-      printf("TESTE\n");
+
+      // If there was a process switch, print it to the console
+      if(currentProcess == NULL){
+          printf("\nSwitched to Process NULL at time %.2f\n",
+                  Time.sinceStart);
+      }
+      else{
+          if(currentProcess != previousProcess){
+              printf("\nSwitched to Process %s at time %.2f\n",
+                      currentProcess->name, Time.sinceStart);
+          }
+      }
+    }
+
+    if(currentProcess == NULL && !isEmpty(highPriorityQueue)){
+        Time.quantumCountdown = quantum;
+        currentProcess = front(highPriorityQueue);
+        printf("\rSwitched to Process %s at time %.2f\n",
+                currentProcess->name, Time.sinceStart);
     }
 
     //If disk is executing, decrease time
@@ -200,7 +232,7 @@ void update(Simulation* simulation){
             currentDisk->ioSize--;
             //TODO: EH BAIXA PRIORIDADE, NAO ALTA!!!
             enqueue(highPriorityQueue,currentDisk);
-            printf("entra na fila de volta em %lf\n",Time.sinceStart);
+            printf("\tentra na fila de volta em %lf\n",Time.sinceStart);
             currentDisk = NULL;
         }
     }
@@ -218,13 +250,13 @@ void update(Simulation* simulation){
             currentMagTape->ioAtual++;
             currentMagTape->ioSize--;
             enqueue(highPriorityQueue,currentMagTape);
-            printf("entra na fila de volta em %lf\n",Time.sinceStart);
+            printf("\tentra na fila de volta em %lf\n",Time.sinceStart);
             currentMagTape = NULL;
         }
     }
     if(currentMagTape == NULL){
         if(!isEmpty(magTapeQueue)){
-            printf("Using magtape\n");
+            printf("Using magnetic tape\t currentProcess name: %s\n",(currentProcess == NULL ? "NULL" : currentProcess->name) );
             currentMagTape = dequeue(magTapeQueue);
             Time.magTapeCountdown = TIMER_MAGTAPE;
         }
@@ -236,13 +268,13 @@ void update(Simulation* simulation){
             currentPrinter->ioAtual++;
             currentPrinter->ioSize--;
             enqueue(highPriorityQueue,currentPrinter);
-            printf("entra na fila de volta em %lf\n",Time.sinceStart);
+            printf("\tentra na fila de volta em %lf\n",Time.sinceStart);
             currentPrinter = NULL;
         }
     }
     if(currentPrinter == NULL){
         if(!isEmpty(printerQueue)){
-            printf("Using printer\n");
+            printf("Using printer\t currentProcess name: %s\n",(currentProcess == NULL ? "NULL" : currentProcess->name) );
             currentPrinter = dequeue(printerQueue);
             Time.printerCountdown = TIMER_PRINTER;
         }
