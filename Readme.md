@@ -2,7 +2,9 @@
 
 ## Grupo
 > Eduardo Dias de Melo Catarina - 117200581
+> 
 > Julia Lima Pohlmann - 117220751
+> 
 > Rafael de Aguiar Ferreira - 117196643
 
 ## Compilação
