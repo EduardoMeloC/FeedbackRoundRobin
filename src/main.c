@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "utils.h"
 #include "Process.h"
@@ -34,6 +35,7 @@ typedef struct Simulation{
     ProcessQueue* highPriorityQueue;
     ProcessQueue* lowPriorityQueue;
     Process* currentProcess;
+    // int currentProcessType;
     Process* previousProcess;
     float quantum;
 
@@ -45,6 +47,26 @@ typedef struct Simulation{
     Process* currentPrinter;
 
 }Simulation;
+
+Process* frontPriority(Simulation* simulation){
+    if(!isEmpty(simulation->highPriorityQueue)){
+        return simulation->highPriorityQueue->m_array[simulation->highPriorityQueue->m_front];
+    }
+    if(!isEmpty(simulation->lowPriorityQueue)){
+        return simulation->lowPriorityQueue->m_array[simulation->lowPriorityQueue->m_front];
+    }
+    fprintf(stderr, "Attempted to obtain element from empty queue\n");
+    exit(EXIT_FAILURE);
+}
+
+Process* dequeuePriority(Simulation* simulation){
+    if (!isEmpty(simulation->highPriorityQueue)){
+        return dequeue(simulation->highPriorityQueue);
+    }
+    else if(!isEmpty(simulation->lowPriorityQueue)){
+        return dequeue(simulation->lowPriorityQueue);
+    }
+}
 
 Simulation* newSimulation(Process* processes[], int n_processes, float quantum){
     Simulation* simulation = (Simulation*) malloc(sizeof(Simulation));
@@ -70,6 +92,7 @@ Simulation* newSimulation(Process* processes[], int n_processes, float quantum){
 
     // Process Queue will keep arrived processes with remaining burst time
     simulation->highPriorityQueue = newProcessQueue(n_processes);
+    simulation->lowPriorityQueue = newProcessQueue(n_processes);
     simulation->currentProcess = NULL;
     simulation->quantum = quantum;
 
@@ -110,7 +133,7 @@ void update(Simulation* simulation){
 
             if(wasEmpty){
                 Time.quantumCountdown = quantum;
-                currentProcess = front(highPriorityQueue);
+                currentProcess = frontPriority(simulation);
                 printf("\rSwitched to Process %s at time %.2f\n",
                     currentProcess->name, Time.sinceStart);
             }
@@ -138,7 +161,7 @@ void update(Simulation* simulation){
                 break;
 
                 default:
-                    printf("Tipo de IO inexistente.\n");
+                    printf("inexisting IO type\n");
                     exit(0);
             }
 
@@ -147,9 +170,9 @@ void update(Simulation* simulation){
 
             // Go to the next process with remaining burst time
             previousProcess = currentProcess;
-            dequeue(highPriorityQueue);
-            if(!isEmpty(highPriorityQueue)){
-                currentProcess = front(highPriorityQueue);
+            dequeuePriority(simulation);
+            if(!isEmpty(highPriorityQueue) || !isEmpty(lowPriorityQueue)){
+                currentProcess = frontPriority(simulation);
             }
         }
     }
@@ -161,22 +184,26 @@ void update(Simulation* simulation){
 
         // Go to the next process with remaining burst time
         previousProcess = currentProcess;
-        dequeue(highPriorityQueue);
-        if(!isEmpty(highPriorityQueue)){
-            currentProcess = front(highPriorityQueue);
+        dequeuePriority(simulation);
+        if(!isEmpty(highPriorityQueue) || !isEmpty(lowPriorityQueue)){
+            currentProcess = frontPriority(simulation);
         }
         else{
             if(previousProcess->burstTime <= 0.0f){
                 currentProcess = NULL;
             }
             else{
-                enqueue(highPriorityQueue, previousProcess);
+                enqueue(lowPriorityQueue, previousProcess);
+                /* if(currentProcess != previousProcess) */
+                    /* printf("\rProcess %s sent to low priority queue\n", previousProcess->name); */
             }
         }
 
         // If there is still burstTime in the previous process, reenqueue it
         if(previousProcess->burstTime > 0.0f){
-            enqueue(highPriorityQueue, previousProcess);
+            enqueue(lowPriorityQueue, previousProcess);
+            /* if(currentProcess != previousProcess) */
+                /* printf("\rProcess %s sent to low priority queue\n", previousProcess->name); */
         }
         //else printf("Process %s ended at time %.2f\n", currentProcess->name, Time.sinceStart);
 
@@ -193,14 +220,16 @@ void update(Simulation* simulation){
         }
 
     }
+
+    // If process finished before quantum is over
     if(currentProcess != NULL && currentProcess->burstTime <= 0.0f){
       // Reset quantum countdown
       Time.quantumCountdown = quantum;
       // Go to the next process with remaining burst time
       previousProcess = currentProcess;
-      dequeue(highPriorityQueue);
-      if(!isEmpty(highPriorityQueue)){
-          currentProcess = front(highPriorityQueue);
+      dequeuePriority(simulation);
+      if(!isEmpty(highPriorityQueue) || !isEmpty(lowPriorityQueue)){
+          currentProcess = frontPriority(simulation);
       }
       else currentProcess = NULL;
 
@@ -217,9 +246,10 @@ void update(Simulation* simulation){
       }
     }
 
+    //se enquanto a fila estava vazia I/O inseriu novo processo
     if(currentProcess == NULL && !isEmpty(highPriorityQueue)){
         Time.quantumCountdown = quantum;
-        currentProcess = front(highPriorityQueue);
+        currentProcess = frontPriority(simulation);
         printf("\rSwitched to Process %s at time %.2f\n",
                 currentProcess->name, Time.sinceStart);
     }
@@ -230,9 +260,9 @@ void update(Simulation* simulation){
         if(Time.diskCountdown <= 0.){
             currentDisk->ioAtual++;
             currentDisk->ioSize--;
-            //TODO: EH BAIXA PRIORIDADE, NAO ALTA!!!
-            enqueue(highPriorityQueue,currentDisk);
-            printf("\tentra na fila de volta em %lf\n",Time.sinceStart);
+            enqueue(lowPriorityQueue,currentDisk);
+            /* printf("\rProcess %s sent to low priority queue\n", previousProcess->name); */
+            printf("\t%s reentered to low priority queue after IO at %.2lf\n", currentDisk->name, Time.sinceStart);
             currentDisk = NULL;
         }
     }
@@ -250,7 +280,7 @@ void update(Simulation* simulation){
             currentMagTape->ioAtual++;
             currentMagTape->ioSize--;
             enqueue(highPriorityQueue,currentMagTape);
-            printf("\tentra na fila de volta em %lf\n",Time.sinceStart);
+            printf("\t%s reentered to high priority queue after IO at %.2lf\n", currentMagTape->name, Time.sinceStart);
             currentMagTape = NULL;
         }
     }
@@ -268,7 +298,7 @@ void update(Simulation* simulation){
             currentPrinter->ioAtual++;
             currentPrinter->ioSize--;
             enqueue(highPriorityQueue,currentPrinter);
-            printf("\tentra na fila de volta em %lf\n",Time.sinceStart);
+            printf("\t%s reentered to high priority queue after IO at %.2lf\n", currentPrinter->name, Time.sinceStart);
             currentPrinter = NULL;
         }
     }
@@ -308,20 +338,23 @@ void update(Simulation* simulation){
 
 
 int main(int argc, char* argv[]){
+    srand((unsigned) time(NULL));
+
     int n_processes = 5;
-    Process* p1 = newProcess("P1", 10, 0);
-    newIO(p1, 1, disk);
-    newIO(p1, 2, disk);
-    Process* p2 = newProcess("P2",  1, 0);
-    Process* p3 = newProcess("P3",  2, 0);
-    Process* p4 = newProcess("P4",  1, 0);
-    Process* p5 = newProcess("P5",  5, 0);
+
+    Process* p1 = newProcess("P1", randomb(1, 16), randomb(0, 8));
+    newIO(p1, randomb(1, p1->burstTime), printer);
+    Process* p2 = newProcess("P2", randomb(1, 16), randomb(0, 8));
+    newIO(p2, randomb(1, p2->burstTime), disk);
+    Process* p3 = newProcess("P3", randomb(1, 16), randomb(0, 8));
+    Process* p4 = newProcess("P4", randomb(1, 16), randomb(0, 8));
+    Process* p5 = newProcess("P5", randomb(1, 16), randomb(0, 8));
 
     Process* processes[5] = {p1, p2, p3, p4, p5};
 
     float quantum = 1;
 
-    Simulation* simulation = newSimulation(processes, 5, quantum);
+    Simulation* simulation = newSimulation(processes, n_processes, quantum);
 
     // Initialize Simulation
     bool isSimulationRunning = true;
@@ -330,7 +363,9 @@ int main(int argc, char* argv[]){
     Time.quantumCountdown = quantum;
 
     // Run main loop while there is still a process to arrive or to be processed
-    while(!(isEmpty(simulation->highPriorityQueue) &&
+    while(!(
+            isEmpty(simulation->highPriorityQueue) &&
+            isEmpty(simulation->lowPriorityQueue) &&
             isEmpty(simulation->diskQueue) &&
             isEmpty(simulation->magTapeQueue) &&
             isEmpty(simulation->printerQueue) &&

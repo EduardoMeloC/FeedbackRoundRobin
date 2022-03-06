@@ -1,9 +1,9 @@
 #ifndef __processh__
 #define __processh__
 
-#define TIMER_DISK 6.0
+#define TIMER_DISK 4.0
 #define TIMER_MAGTAPE 6.0
-#define TIMER_PRINTER 6.0
+#define TIMER_PRINTER 8.0
 
 #define MAX_IO_PER_PROCESS 20
 

@@ -8,4 +8,6 @@ void* safe_malloc(size_t size);
 
 void* safe_calloc(size_t nmemb, size_t size);
 
+int randomb(int minimum_number, int max_number);
+
 #endif
