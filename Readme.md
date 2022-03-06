@@ -21,12 +21,12 @@ make all
 Ainda na pasta "FeedbackRoundRobin", faça:
 
 ```
->./bin/main.out
+./bin/main.out
 ```  
 (O executável estará na pasta "bin".)
 
 **Dica:** Caso queira mudar parâmetros, para compilar e executar rapidamente, faça:
 ```
->make all && ./bin/main.out
+make all && ./bin/main.out
 ```
 
