@@ -107,7 +107,7 @@ Simulation* newSimulation(Process* processes[], int n_processes, float quantum){
     Simulation* simulation = (Simulation*) malloc(sizeof(Simulation));
 
     // Sort received processes and add them to the arrival queue
-    ProcessQueue* arrivalQueue = newProcessQueue(n_processes);
+    ProcessQueue* arrivalQueue = newProcessQueue(n_processes,"arrivalQueue");
 
     for(int i=0; i < n_processes-1; i++){
         for(int j=0; j < n_processes-1; j++){
@@ -126,8 +126,8 @@ Simulation* newSimulation(Process* processes[], int n_processes, float quantum){
     simulation->arrivalQueue = arrivalQueue;
 
     // Process Queue will keep arrived processes with remaining burst time
-    simulation->highPriorityQueue = newProcessQueue(n_processes);
-    simulation->lowPriorityQueue = newProcessQueue(n_processes);
+    simulation->highPriorityQueue = newProcessQueue(n_processes,"highPriorityQueue");
+    simulation->lowPriorityQueue = newProcessQueue(n_processes,"lowPriorityQueue");
     simulation->currentProcess = NULL;
     simulation->quantum = quantum;
 
@@ -136,9 +136,9 @@ Simulation* newSimulation(Process* processes[], int n_processes, float quantum){
     for(int i=0; i<n_processes; i++){
         n_io += processes[i]->ioSize;
     }
-    simulation->diskQueue = newProcessQueue(n_io);
-    simulation->magTapeQueue = newProcessQueue(n_io);
-    simulation->printerQueue = newProcessQueue(n_io);
+    simulation->diskQueue = newProcessQueue(n_io,"diskQueue");
+    simulation->magTapeQueue = newProcessQueue(n_io,"magTapeQueue");
+    simulation->printerQueue = newProcessQueue(n_io,"printerQueue");
 
     return simulation;
 }
@@ -186,7 +186,7 @@ void update(Simulation* simulation){
             switch(currentProcess->ioTypes[currentProcess->ioAtual]){
                 case disk:
                     enqueue(diskQueue,currentProcess);
-                    printf("\tenqueue disk\n");
+                    printf("\tenqueue disk %s\n", currentProcess->name);
                 break;
 
                 case magTape:
@@ -203,8 +203,6 @@ void update(Simulation* simulation){
                     printf("unexisting IO type\n");
                     exit(0);
             }
-
-            currentProcess->ioAtual++;
 
             // Reset quantum countdown
             Time.quantumCountdown = quantum;
@@ -226,6 +224,7 @@ void update(Simulation* simulation){
 
         // Go to the next process with remaining burst time
         previousProcess = currentProcess;
+        simulation->currentProcess = currentProcess;
         dequeueCurrentProcess(simulation);
         if(!isEmpty(highPriorityQueue) || !isEmpty(lowPriorityQueue)){
             currentProcess = frontPriority(simulation);
@@ -234,18 +233,16 @@ void update(Simulation* simulation){
             if(previousProcess->burstTime <= 0.0f){
                 currentProcess = NULL;
             }
-            else{
-                enqueue(lowPriorityQueue, previousProcess);
+            //else{
+            //    enqueue(lowPriorityQueue, previousProcess);
                 /* if(currentProcess != previousProcess) */
                     /* printf("\rProcess %s sent to low priority queue\n", previousProcess->name); */
-            }
+            //}
         }
 
         // If there is still burstTime in the previous process, reenqueue it
         if(previousProcess->burstTime > 0.0f){
             enqueue(lowPriorityQueue, previousProcess);
-            /* if(currentProcess != previousProcess) */
-                /* printf("\rProcess %s sent to low priority queue\n", previousProcess->name); */
         }
         //else printf("Process %s ended at time %.2f\n", currentProcess->name, Time.sinceStart);
 
@@ -269,6 +266,7 @@ void update(Simulation* simulation){
       Time.quantumCountdown = quantum;
       // Go to the next process with remaining burst time
       previousProcess = currentProcess;
+      simulation->currentProcess = currentProcess;
       dequeueCurrentProcess(simulation);
       if(!isEmpty(highPriorityQueue) || !isEmpty(lowPriorityQueue)){
           currentProcess = frontPriority(simulation);
@@ -300,7 +298,7 @@ void update(Simulation* simulation){
     if(currentDisk != NULL){
         Time.diskCountdown -= Time.deltaTime;
         if(Time.diskCountdown <= 0.){
-            //currentDisk->ioAtual++;
+            currentDisk->ioAtual++;
             currentDisk->ioSize--;
             enqueue(lowPriorityQueue,currentDisk);
             /* printf("\rProcess %s sent to low priority queue\n", previousProcess->name); */
@@ -319,7 +317,7 @@ void update(Simulation* simulation){
     if(currentMagTape != NULL){
         Time.magTapeCountdown -= Time.deltaTime;
         if(Time.magTapeCountdown <= 0.){
-            //currentMagTape->ioAtual++;
+            currentMagTape->ioAtual++;
             currentMagTape->ioSize--;
             enqueue(highPriorityQueue,currentMagTape);
             printf("\t%s reentered to high priority queue after IO at %.2lf\n", currentMagTape->name, Time.sinceStart);
@@ -337,7 +335,7 @@ void update(Simulation* simulation){
     if(currentPrinter != NULL){
         Time.printerCountdown -= Time.deltaTime;
         if(Time.printerCountdown <= 0.){
-            //currentPrinter->ioAtual++;
+            currentPrinter->ioAtual++;
             currentPrinter->ioSize--;
             enqueue(highPriorityQueue,currentPrinter);
             printf("\t%s reentered to high priority queue after IO at %.2lf\n", currentPrinter->name, Time.sinceStart);
@@ -384,7 +382,6 @@ int main(int argc, char* argv[]){
 
     int n_processes = 5;
 
-
     Process* p1 = newProcess("P1", randomb(1, 16), randomb(0, 8));
     newIO(p1, randomb(0, p1->burstTime-1), printer);
     newIO(p1, randomb(0, p1->burstTime-1), disk);
@@ -393,6 +390,18 @@ int main(int argc, char* argv[]){
     Process* p3 = newProcess("P3", randomb(1, 16), randomb(0, 8));
     Process* p4 = newProcess("P4", randomb(1, 16), randomb(0, 8));
     Process* p5 = newProcess("P5", randomb(1, 16), randomb(0, 8));
+
+    /* EXEMPLO DA LISTA, CASO QUEIRAM
+    Process* p1 = newProcess("P1", 13, 0);
+    newIO(p1, 4, disk);
+    Process* p2 = newProcess("P2", 11, 4);
+    newIO(p2, 2, magTape);
+    newIO(p2, 6, disk);
+    Process* p3 = newProcess("P3", 7, 5);
+    Process* p4 = newProcess("P4", 8, 7);
+    Process* p5 = newProcess("P5", 16, 10);
+    newIO(p5, 2, disk);
+    newIO(p5, 7, magTape);*/
 
     Process* processes[5] = {p1, p2, p3, p4, p5};
 

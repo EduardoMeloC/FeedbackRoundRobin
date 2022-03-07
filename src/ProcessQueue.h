@@ -4,13 +4,14 @@
 #include "Process.h"
 
 typedef struct ProcessQueue{
+    const char* name;
     int m_length;
     int m_front, m_back;
     Process** m_array;
     unsigned m_capacity;
 }ProcessQueue;
 
-ProcessQueue* newProcessQueue(unsigned capacity);
+ProcessQueue* newProcessQueue(unsigned capacity,const char* name);
 
 ProcessQueue* delete(ProcessQueue* queue);
 

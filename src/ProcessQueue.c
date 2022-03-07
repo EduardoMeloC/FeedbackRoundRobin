@@ -4,8 +4,9 @@
 #include "utils.h"
 #include "ProcessQueue.h"
 
-ProcessQueue* newProcessQueue(unsigned capacity){
+ProcessQueue* newProcessQueue(unsigned capacity,const char* name){
     ProcessQueue* queue = (ProcessQueue *) safe_malloc(sizeof(ProcessQueue));
+    queue->name = name;
     queue->m_length = 0;
     queue->m_front = 0;
     queue->m_back = capacity-1;
@@ -56,6 +57,8 @@ void enqueue(ProcessQueue* queue, Process* element){
     this->m_back = (this->m_back + 1) % this->m_capacity;
     this->m_array[this->m_back] = element;
     this->m_length++;
+
+    //printf("\nEnqueued %s to %s %s\n",element->name,this->name,toString(this));
 }
 
 Process* dequeue(ProcessQueue* queue){
@@ -66,6 +69,7 @@ Process* dequeue(ProcessQueue* queue){
     }
 
     Process* element = this->m_array[this->m_front];
+    //printf("\nDequeued %s from %s %s\n",element->name,this->name,toString(this));
     this->m_front = (this->m_front + 1) % this->m_capacity;
     this->m_length--;
     return element;
@@ -92,7 +96,7 @@ int main()
     Process* p3 = newProcess("P3",  2, 0);
     Process* p4 = newProcess("P4",  1, 0);
     Process* p5 = newProcess("P5",  5, 0);
- 
+
     enqueue(queue, p1);
     enqueue(queue, p2);
     enqueue(queue, p3);
@@ -100,14 +104,14 @@ int main()
     enqueue(queue, p5);
 
     printf("%s\n", toString(queue));
- 
+
     printf("%s dequeued from queue\n\n",
            dequeue(queue)->name);
- 
+
     printf("%s\n", toString(queue));
 
     printf("Front item is %s\n", front(queue)->name);
- 
+
     return 0;
 }
 */
