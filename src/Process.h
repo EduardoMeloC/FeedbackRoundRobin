@@ -15,7 +15,7 @@ typedef struct Process{
     float burstTime, arrivalTime;
 
     int ioSize; //IO request list size
-    int ioAtual; //index of the active IO request w/ smallest ioTime
+    int ioAtual; //index of the next IO request to do
     float* ioTimes;
     IOType* ioTypes;
     float origBurstTime;

@@ -34,6 +34,18 @@ int newIO(const void* p1, const float time ,const IOType type ){
         p->ioTimes[p->ioSize] = time;
         p->ioTypes[p->ioSize] = type;
         p->ioSize++;
+        for(int i=0; i < (p->ioSize)-1; i++){
+            for(int j=0; j < (p->ioSize)-1; j++){
+                if(p->ioTimes[j] > p->ioTimes[j+1]){
+                    float tempTime = p->ioTimes[j];
+                    IOType tempType = p->ioTypes[j];
+                    p->ioTimes[j] = p->ioTimes[j+1];
+                    p->ioTimes[j+1] = tempTime;
+                    p->ioTypes[j] = p->ioTypes[j+1];
+                    p->ioTypes[j+1] = tempType;
+                }
+            }
+        }
     }
 }
 
