@@ -13,17 +13,15 @@ typedef struct Process{
     const char* name;
 
     float burstTime, arrivalTime;
+    float origBurstTime;
 
-    int ioSize; //IO request list size
-    int ioAtual; //index of the next IO request to do
     float* ioTimes;
     IOType* ioTypes;
-    float origBurstTime;
+    int ioSize; //IO request list size
+    int ioAtual; //index of the next IO request to do
 }Process;
 
 Process* newProcess(const char* name, float burstTime, float arrivalTime);
-
-int compareArrivalTime(const void* p1, const void* p2);
 
 int newIO(const void* p, const float time ,const IOType type);
 

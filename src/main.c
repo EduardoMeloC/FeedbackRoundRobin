@@ -164,13 +164,11 @@ void update(Simulation* simulation){
     // Add the process to queue if arrived
     while(!isEmpty(arrivalQueue)){
         if(Time.sinceStart >= front(arrivalQueue)->arrivalTime){
-            //n_arrived_now++;
             Process* nextProcess = dequeue(arrivalQueue);
             bool wasEmpty = (isEmpty(highPriorityQueue) && isEmpty(lowPriorityQueue));
             enqueue(highPriorityQueue, nextProcess);
 
             if(wasEmpty){
-                //n_arrived_now--;
                 Time.quantumCountdown = quantum;
                 currentProcess = frontPriority(simulation);
                 printf("\rSwitched to Process %s at time %.2f\n",
@@ -182,7 +180,6 @@ void update(Simulation* simulation){
     //If current process has IO request now, send request and go to next process with remaining burst time
     if(currentProcess != NULL && currentProcess->ioSize > 0) {
         if(currentProcess->origBurstTime - currentProcess->burstTime >= currentProcess->ioTimes[currentProcess->ioAtual]){
-
             switch(currentProcess->ioTypes[currentProcess->ioAtual]){
                 case disk:
                     enqueue(diskQueue,currentProcess);
@@ -213,7 +210,16 @@ void update(Simulation* simulation){
             if(!isEmpty(highPriorityQueue) || !isEmpty(lowPriorityQueue)){
                 currentProcess = frontPriority(simulation);
             }
-            else currentProcess == NULL;
+            else currentProcess = NULL;
+
+            if(currentProcess == NULL){
+                printf("\rSwitched to Process NULL at time %.2f\n",
+                        Time.sinceStart);
+            }
+            else{
+                printf("\rSwitched to Process %s at time %.2f\n",
+                        currentProcess->name, Time.sinceStart);
+            }
         }
     }
 
@@ -233,11 +239,6 @@ void update(Simulation* simulation){
             if(previousProcess->burstTime <= 0.0f){
                 currentProcess = NULL;
             }
-            //else{
-            //    enqueue(lowPriorityQueue, previousProcess);
-                /* if(currentProcess != previousProcess) */
-                    /* printf("\rProcess %s sent to low priority queue\n", previousProcess->name); */
-            //}
         }
 
         // If there is still burstTime in the previous process, reenqueue it
@@ -275,19 +276,19 @@ void update(Simulation* simulation){
 
       // If there was a process switch, print it to the console
       if(currentProcess == NULL){
-          printf("\nSwitched to Process NULL at time %.2f\n",
+          printf("\rSwitched to Process NULL at time %.2f\n",
                   Time.sinceStart);
       }
       else{
           if(currentProcess != previousProcess){
-              printf("\nSwitched to Process %s at time %.2f\n",
+              printf("\rSwitched to Process %s at time %.2f\n",
                       currentProcess->name, Time.sinceStart);
           }
       }
     }
 
     //se enquanto a fila estava vazia I/O inseriu novo processo
-    if(currentProcess == NULL && !isEmpty(highPriorityQueue)){
+    if(currentProcess == NULL && (!isEmpty(highPriorityQueue) || !isEmpty(lowPriorityQueue))){
         Time.quantumCountdown = quantum;
         currentProcess = frontPriority(simulation);
         printf("\rSwitched to Process %s at time %.2f\n",
@@ -381,17 +382,19 @@ int main(int argc, char* argv[]){
     srand((unsigned) time(NULL));
 
     int n_processes = 5;
-
-    Process* p1 = newProcess("P1", randomb(1, 16), randomb(0, 8));
+/*
+    Process* p1 = newProcess("P1", randomb(1, 4), randomb(0, 2));
     newIO(p1, randomb(0, p1->burstTime-1), printer);
     newIO(p1, randomb(0, p1->burstTime-1), disk);
-    Process* p2 = newProcess("P2", randomb(1, 16), randomb(0, 8));
+    Process* p2 = newProcess("P2", randomb(1, 4), randomb(0, 2));
     newIO(p2, randomb(0, p2->burstTime-1), disk);
-    Process* p3 = newProcess("P3", randomb(1, 16), randomb(0, 8));
-    Process* p4 = newProcess("P4", randomb(1, 16), randomb(0, 8));
-    Process* p5 = newProcess("P5", randomb(1, 16), randomb(0, 8));
-
-    /* EXEMPLO DA LISTA, CASO QUEIRAM
+    Process* p3 = newProcess("P3", randomb(1, 4), randomb(0, 2));
+    newIO(p3, randomb(0, p3->burstTime-1), magTape);
+    newIO(p3, randomb(0, p3->burstTime-1), disk);
+    Process* p4 = newProcess("P4", randomb(1, 4), randomb(0, 2));
+    Process* p5 = newProcess("P5", randomb(1, 4), randomb(0, 2));
+*/
+    // EXEMPLO DA LISTA, CASO QUEIRAM
     Process* p1 = newProcess("P1", 13, 0);
     newIO(p1, 4, disk);
     Process* p2 = newProcess("P2", 11, 4);
@@ -401,7 +404,7 @@ int main(int argc, char* argv[]){
     Process* p4 = newProcess("P4", 8, 7);
     Process* p5 = newProcess("P5", 16, 10);
     newIO(p5, 2, disk);
-    newIO(p5, 7, magTape);*/
+    newIO(p5, 7, magTape);
 
     Process* processes[5] = {p1, p2, p3, p4, p5};
 

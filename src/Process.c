@@ -48,32 +48,3 @@ int newIO(const void* p1, const float time ,const IOType type ){
         }
     }
 }
-
-/*void update_IO_queue(IOType type, void* queue void* argCurrent, void* targetQueue, float countDown, float deltaTime ){
-    Process* current = (Process*) argCurrent;
-
-    //If printer is executing, decrease time
-    if(current != NULL){
-        countdown -= deltaTime;
-        if(countdown <= 0.){
-            current->ioAtual++;
-            current->ioSize--;
-            enqueue(targetQueue,current);
-            current = NULL;
-        }
-    }
-    if(current == NULL){
-        if(!isEmpty(queue)){
-            current = dequeue(queue);
-            countdown = TIMER_PRINTER;
-        }
-    }
-}/*/
-
-/* int compareArrivalTime(const void* p1, const void* p2){ */
-/*     Process* P1 = (Process*)p1; */
-/*     Process* P2 = (Process*)p2; */
-/*     if( P1->arrivalTime > P2->arrivalTime ) return 1; */
-/*     else if( P1->arrivalTime < P2->arrivalTime ) return -1; */
-/*     return 0; */
-/* } */
