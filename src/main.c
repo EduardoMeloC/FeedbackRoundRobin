@@ -382,7 +382,7 @@ int main(int argc, char* argv[]){
     srand((unsigned) time(NULL));
 
     int n_processes = 5;
-/*
+
     Process* p1 = newProcess("P1", randomb(1, 4), randomb(0, 2));
     newIO(p1, randomb(0, p1->burstTime-1), printer);
     newIO(p1, randomb(0, p1->burstTime-1), disk);
@@ -393,8 +393,9 @@ int main(int argc, char* argv[]){
     newIO(p3, randomb(0, p3->burstTime-1), disk);
     Process* p4 = newProcess("P4", randomb(1, 4), randomb(0, 2));
     Process* p5 = newProcess("P5", randomb(1, 4), randomb(0, 2));
-*/
+
     // EXEMPLO DA LISTA, CASO QUEIRAM
+/*  
     Process* p1 = newProcess("P1", 13, 0);
     newIO(p1, 4, disk);
     Process* p2 = newProcess("P2", 11, 4);
@@ -405,7 +406,7 @@ int main(int argc, char* argv[]){
     Process* p5 = newProcess("P5", 16, 10);
     newIO(p5, 2, disk);
     newIO(p5, 7, magTape);
-
+*/
     Process* processes[5] = {p1, p2, p3, p4, p5};
 
     float quantum = 1;
